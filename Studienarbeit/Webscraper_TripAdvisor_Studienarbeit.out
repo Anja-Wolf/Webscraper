@@ -1,0 +1,37 @@
+\BOOKMARK [0][-]{chapter.1}{Problemstellung - Johannes Knippel}{}% 1
+\BOOKMARK [0][-]{chapter.2}{Grundlagen}{}% 2
+\BOOKMARK [1][-]{section.2.1}{Datenstrukturen - Anja Wolf}{chapter.2}% 3
+\BOOKMARK [1][-]{section.2.2}{Web Scraping - Johanna Sickendiek}{chapter.2}% 4
+\BOOKMARK [2][-]{subsection.2.2.1}{Funktionsweise - Johanna Sickendiek}{section.2.2}% 5
+\BOOKMARK [2][-]{subsection.2.2.2}{Verwendung - Johanna Sickendiek}{section.2.2}% 6
+\BOOKMARK [1][-]{section.2.3}{TripAdvisor - Johanna Sickendiek}{chapter.2}% 7
+\BOOKMARK [0][-]{chapter.3}{Anforderungen}{}% 8
+\BOOKMARK [1][-]{section.3.1}{Funktionale Anforderungen - Skanny Morandi}{chapter.3}% 9
+\BOOKMARK [1][-]{section.3.2}{Nicht funktionale Anforderungen - Skanny Morandi}{chapter.3}% 10
+\BOOKMARK [0][-]{chapter.4}{Implementierung}{}% 11
+\BOOKMARK [1][-]{section.4.1}{Konfiguration - Johanna Sickendiek}{chapter.4}% 12
+\BOOKMARK [1][-]{section.4.2}{BeautifulSoup - Anja Wolf}{chapter.4}% 13
+\BOOKMARK [1][-]{section.4.3}{Implementierung Web Scraper - Anja Wolf}{chapter.4}% 14
+\BOOKMARK [2][-]{subsection.4.3.1}{Initialisierung BeautifulSoup - Anja Wolf}{section.4.3}% 15
+\BOOKMARK [2][-]{subsection.4.3.2}{Extraktion Allgemeiner Daten - Anja Wolf}{section.4.3}% 16
+\BOOKMARK [2][-]{subsection.4.3.3}{Bewertungslink aller Bewertungen auslesen - Anja Wolf}{section.4.3}% 17
+\BOOKMARK [2][-]{subsection.4.3.4}{Extraktion Bewertungensdaten - Johanna Sickendiek}{section.4.3}% 18
+\BOOKMARK [1][-]{section.4.4}{Datenhaltung - Johannes Knippel}{chapter.4}% 19
+\BOOKMARK [2][-]{subsection.4.4.1}{Definition der Datenbankanforderungen - Johannes Knippel}{section.4.4}% 20
+\BOOKMARK [3][-]{subsubsection.4.4.1.1}{Vergleich: SQLLite und TinyDB - Johannes Knippel}{subsection.4.4.1}% 21
+\BOOKMARK [2][-]{subsection.4.4.2}{Datenbankstruktur - Johannes Knippel}{section.4.4}% 22
+\BOOKMARK [3][-]{subsubsection.4.4.2.1}{Tabellen mit Spalten - Johannes Knippel}{subsection.4.4.2}% 23
+\BOOKMARK [3][-]{subsubsection.4.4.2.2}{Zeichnung und Zusammenhang - Johannes Knippel}{subsection.4.4.2}% 24
+\BOOKMARK [2][-]{subsection.4.4.3}{Daten bereinigen und integrieren - Johannes Knippel}{section.4.4}% 25
+\BOOKMARK [1][-]{section.4.5}{Graphische Benutzeroberfl\344che - GUI - Skanny Morandi}{chapter.4}% 26
+\BOOKMARK [2][-]{subsection.4.5.1}{Konzept - Skanny Morandi}{section.4.5}% 27
+\BOOKMARK [2][-]{subsection.4.5.2}{GUI - Umsetzung - Skanny Morandi}{section.4.5}% 28
+\BOOKMARK [0][-]{chapter.5}{Web Scraper anhand eines Beispiels - Johanna Sickendiek}{}% 29
+\BOOKMARK [0][-]{chapter.6}{Erf\374llung der Anforderungen}{}% 30
+\BOOKMARK [1][-]{section.6.1}{Funktionale Anforderungen - Skanny Morandi}{chapter.6}% 31
+\BOOKMARK [1][-]{section.6.2}{Nicht-funktionale Anforderungen - Skanny Morandi}{chapter.6}% 32
+\BOOKMARK [0][-]{chapter.7}{Fazit und Ausblick - Anja Wolf}{}% 33
+\BOOKMARK [0][-]{chapter.7}{Abbildungsverzeichnis}{}% 34
+\BOOKMARK [0][-]{chapter*.24}{Programmcodeverzeichnis}{}% 35
+\BOOKMARK [0][-]{chapter*.25}{Literaturverzeichnis}{}% 36
+\BOOKMARK [0][-]{chapter*.27}{Eidesstattliche Erkl\344rung}{}% 37
