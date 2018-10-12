@@ -32,58 +32,100 @@ class Web_scraping:
         source_code.decoding = ('utf-16BE')
         plain_text = source_code.text
         soup = BeautifulSoup(plain_text, "html.parser")
+
+        #get all the hotel containers from current page
+        hotel_containers = soup.find_all('div', class_= 'listing_title')
+        reviewsPerPage = len(hotel_containers)
+
+
+        #get the pageNumbers for all hotels in the chosen city
+        pageNumbers = int(soup.find('div', class_= 'pageNumbers').find(class_='pageNum last taLnk ').text)
+        counter = 1
         
-        self.name = soup.find('h1', {'class': 'heading_title'})
-        print("Restaurantname: " + self.name.string)
+
+        #Extract data from single hotel containers of page 1 
+        for container in hotel_containers:
+                
+            for link in container.find_all('a', href=True):
+                href = "https://www.tripadvisor.de" + str(link.get('href'))
+                #pass it to the function where single data is scraped
+                self.loop_through_review_pages(href)
+                counter = counter + 1
+                
+        
+        #create a new_url for each page of the hotel pages
+        for index in range (reviewsPerPage,pageNumbers*reviewsPerPage, reviewsPerPage):
             
-        self.overallPoints = soup.find('div', {'class':'rs rating'})
-        print ("Punkteskala: " + self.overallPoints.div.span['content'])
+            data = url.split("g187309-")
+            new_url = data[0]+"g187309-oa"+str(index)+'-'+data[1]
+            #pass the new_url to the loop_trough_review_pages function
+            self.loop_through_hotel_pages(new_url)
         
-        for self.rating_amount in soup.find('span', {'property': 'count'}):
-            print("Anzahl_Bewertungen: " + self.rating_amount.string)
-            
-        for self.popularity in soup.find_all('span', {'class': 'header_popularity popIndexValidation'}):
-            print("Popularitaet: " + self.popularity.text)
         
-        for self.price_level1 in soup.find('span', {'class': 'header_tags rating_and_popularity'}):
-            self.price_level = unicodedata.normalize('NFD', self.price_level1.string)
-            print("Preis_Level: " + self.price_level)
+        #print ("Es wurden " + str(counter) + " textuelle von " + self.rating_amount.string + " Bewertungen abgegeben!")
+     
         
-        for self.cuisine in soup.find_all('span', {'class': 'header_links rating_and_popularity'}):
-            print('Kueche: ' + self.cuisine.text)
-        
-        for self.address in soup.find('span', {'class': 'street-address'}):
-            print("Strasse: " + self.address.string)
+
+    '''   
+    @author: JohannesKnippel
     
-        for self.locality in soup.find('span', {'class': 'locality'}):
-            print("PLZ_Ort: " + self.locality.string)
+    loop through the page of al hotels and store the new link of each hotel in variable
+    then pass it to the function where it loops through each review container
+    '''
+    def loop_through_hotel_pages(self, loop_url):
+        source_code = requests.get(loop_url)
+        plain_text = source_code.text
+        soup = BeautifulSoup(plain_text, "html.parser")
         
-        for self.phonenumber in soup.find_all('div', {'class': 'blEntry phone'}):
-            print("Telefonnummer: " + self.phonenumber.text)
-
-
-        #define auto increment ID for each Restaurant, Review and User 
-        self.idRestaurant = 0
-        self.idReview = 0
-        self.idUser = 0
-
-
-        #load all relevant restaurant data into database (table: RESTAURANTS)    
-        self.parse_to_tinydb_rest()   
+        #get all hotels but on the new_url
+        hotel_containers = soup.find_all('div', class_= 'listing_title')
+        reviewsPerPage = len(hotel_containers)
         
+        #search trough all hotels on the page
+        for container in hotel_containers:
+                
+            for link in container.find_all('a', href=True):
+                href = "https://www.tripadvisor.de" + str(link.get('href'))
+                #pass it to the function where single data is scraped
+                self.loop_through_review_pages(href)
+                
+    
+        '''
+    Created on 18.04.2018 - 20.05.2018
+    
+    @author: anjawolf
+    
+    Data will be scraped from the Tripadvisors Website and stored in variables.
+    '''
+    def loop_through_review_pages(self,url):
+        source_code = requests.get(url)
+        source_code.decoding = ('utf-16BE')
+        plain_text = source_code.text
+        soup = BeautifulSoup(plain_text, "html.parser")
+        
+        self.item_name = soup.find('script', {'type': 'application/ld+json'})
+        json_string = str(self.item_name.string)
+        obj = json.loads(json_string)
+        
+        #get title of the hotel
+        self.title = obj["name"]
+        print ("Titel: " + self.title)
 
-        #get all the review containers from current page
+        #get overall rating of the hotel
+        self.points = obj["aggregateRating"] ["ratingValue"]
+        print ("Rating: " + self.points)
+
         review_containers = soup.find_all('div', class_= 'review-container')
         reviewsPerPage = len(review_containers)
 
 
-        #get the pageNumbers for all reviews per restaurant
-        pageNumbers = soup.find_all('a', class_= 'pageNum')
-        pages = len(pageNumbers)
+        #get the amount pageNumbers for all reviews per hotels
+        pageNumbers = int(soup.find('div', class_= 'pageNumbers').find(class_='pageNum last taLnk ').text)
+        
         counter = 1
         
 
-        #Extract data from single containers   
+        #Extract data from single containers of first page
         for container in review_containers:
                 
             for link in container.find_all('a', href=True):
@@ -94,25 +136,25 @@ class Web_scraping:
                 
         
         #create a new_url for each page of the reviews
-        for index in range (10,pages*10, 10):
+        for index in range (reviewsPerPage,pageNumbers*reviewsPerPage, reviewsPerPage):
             
             data = url.split("Reviews-")
             new_url = data[0]+"Reviews-or"+str(index)+'-'+data[1]
             #pass the new_url to the loop_trough_review_pages function
-            self.loop_through_review_pages(new_url)
+            self.loop_through_reviews(new_url)
         
         
-        print ("Es wurden " + str(counter) + " textuelle von " + self.rating_amount.string + " Bewertungen abgegeben!")
+        #print ("Es wurden " + str(counter) + " textuelle von " + self.rating_amount.string + " Bewertungen abgegeben!")
      
-        
-
-    '''   
-    @author: JohannesKnippel
+       
     
-    loop through the restaurant review pages and store the new link in variable
+    
+    '''   
+    @author: Anja Wolf
+    loop through the hotel review pages and store the new link in variable
     then pass it to the function where single data is scraped
     '''
-    def loop_through_review_pages(self, loop_url):
+    def loop_through_reviews(self, loop_url):
         source_code = requests.get(loop_url)
         plain_text = source_code.text
         soup = BeautifulSoup(plain_text, "html.parser")
@@ -132,26 +174,15 @@ class Web_scraping:
     
 
     '''   
-    @author: JohannesKnippel, anjawolf, JohannaSickendiek
+    @author: Anja Wolf
     
-    loop through the reviews and scrape the data. use link of loop_through_review_pages()
+    Scrapes the data of one review. uses link of loop_through_review_pages()
     '''
     def get_single_review_data(self,review_url):     
         source_code2 = requests.get(review_url)
         plain_text2 = source_code2.text
         soup = BeautifulSoup(plain_text2, "html.parser")
         
-        #Lists to store scraped data in
-        self.username = soup.find('span', {'class': 'expand_inline scrname'}).text
-        print('Benutzername: ' + self.username)
-        
-        for self.numberOfReviews in soup.findAll('span', {'class': 'badgetext'})[0]:
-            print("Anzahl Reviews: " + self.numberOfReviews.string)
-            
-            
-        for self.numberOfLikes in soup.findAll('span', {'class': 'badgetext'})[1]:
-            print("Anzahl Likes: " + self.numberOfLikes.string)
-
         #intizialise and load the json from TA to search for relevant data     
         self.item_name = soup.find('script', {'type': 'application/ld+json'})
         json_string = str(self.item_name.string)
@@ -165,20 +196,12 @@ class Web_scraping:
         self.review = obj["reviewBody"]
         print ("Bewertung: " + self.review)
 
-        #get rating of the review    
-        self.points = soup.find('div', {'class':'rating'})
-        print ("Rating: "+ self.points.span.span['alt'].split()[0])
+        #get rating of the review
+        self.points = obj["reviewRating"] ["ratingValue"]
+        print ("Rating: " + self.points)
 
-        #Get URL from review pictures
-        for link in soup.findAll('div', {'id': 'taplc_location_reviews_list_sur_callout_0'}):
-            if link.find('div', {'class': 'inlinePhotosWrapper'}):
-                for pic in link.findAll('img', {'class': 'centeredImg'}):
-                    self.src = pic.get('src')
-                    print("Quelle Bild " + self.src)
-            else:
-                print("No pictures have been uploaded for this review!")
         #load all relevant review, User, Picture data into database (table: REVIEWS, USERS, PICTURES)
-        self.parse_to_tinydb_us_rev_pic()
+        #self.parse_to_tinydb_us_rev_pic()
     
 
 
@@ -197,7 +220,7 @@ class Web_scraping:
     
     TinyDB - Database. Scraped Data from get_single_data() function will be parsed to a Database saved in .json-Format. These are all the Restaurant related data
     '''
-    def parse_to_tinydb_rest(self):
+    '''def parse_to_tinydb_rest(self):
         cwd = os.getcwd()
         try:
             #create the database or use the existing one
@@ -246,12 +269,14 @@ class Web_scraping:
 
 
 
-    '''    
+    ''' 
+    '''
     @author: JohannesKnippel
     
     TinyDB - Database. Scraped Data from get_single_review_data() function will be parsed to a Database saved in .json-Format. These are all the Review, Users and Pictures related data
     '''
-    def parse_to_tinydb_us_rev_pic(self):
+            
+    ''' def parse_to_tinydb_us_rev_pic(self):
         cwd = os.getcwd()
         try:
             #create the database or use the existing one
@@ -328,16 +353,16 @@ class Web_scraping:
         else:  
             dataPictures = {'REV_ID':self.idReview, 'QUELLE':self.src} 
             tablePictures.insert(dataPictures)
-
+'''
 
 
 
     '''
     @author: Skanny Morandi
    
-    opens a GUI that validates a given url-string and starts the scraping on button click
+    'opens a GUI that validates a given url-string and starts the scraping on button click
     '''
-    def start_GUI(self):
+    ''' def start_GUI(self):
 
 
         roots = tk.Tk()
@@ -395,16 +420,21 @@ class Web_scraping:
 
         scrape_button.grid(columnspan=5, sticky=tk.W)
         roots.mainloop()
-
+'''
 
 '''
 @author: Skanny Morandi, JohannesKnippel
    
-Maisn function, will be executed when starting the python-script
-'''         
+Main function, will be executed when starting the python-script
+'''  
+           
 if __name__ == "__main__":
+    
     ws = Web_scraping()
-    ws.start_GUI()
+    #ws.get_single_data('https://www.tripadvisor.de/Hotels-g187309-oa30-Munich_Upper_Bavaria_Bavaria-Hotels.html')
+    #ws.loop_through_review_pages('https://www.tripadvisor.de/Hotel_Review-g187309-d199637-Reviews-Hilton_Munich_Park-Munich_Upper_Bavaria_Bavaria.html')
+    ws.get_single_data('https://www.tripadvisor.de/Hotels-g187309-oa30-Munich_Upper_Bavaria_Bavaria-Hotels.html')
+    #ws.start_GUI()
     #example URL:
     # https://www.tripadvisor.de/Restaurant_Review-g946452-d8757235-Reviews-The_Forge_Tea_Room-Hutton_le_Hole_North_York_Moors_National_Park_North_Yorkshire_.html
     # https://www.tripadvisor.de/Restaurant_Review-g187309-d2656918-Reviews-Savanna-Munich_Upper_Bavaria_Bavaria.html
