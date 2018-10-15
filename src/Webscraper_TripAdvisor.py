@@ -33,12 +33,12 @@ class Web_scraping:
         plain_text = source_code.text
         soup = BeautifulSoup(plain_text, "html.parser")
 
-        #get all the hotel containers from current page
+        #get all the hotel containers from the first page
         hotel_containers = soup.find_all('div', class_= 'listing_title')
         reviewsPerPage = len(hotel_containers)
 
 
-        #get the pageNumbers for all hotels in the chosen city
+        #get the number pages of hotels in the chosen city
         pageNumbers = int(soup.find('div', class_= 'pageNumbers').find(class_='pageNum last taLnk ').text)
         counter = 1
         
@@ -53,12 +53,12 @@ class Web_scraping:
                 counter = counter + 1
                 
         
-        #create a new_url for each page of the hotel pages
+        #create a new_url for each following page of the hotel pages (starting with page 2)
         for index in range (reviewsPerPage,pageNumbers*reviewsPerPage, reviewsPerPage):
             
             data = url.split("g187309-")
             new_url = data[0]+"g187309-oa"+str(index)+'-'+data[1]
-            #pass the new_url to the loop_trough_review_pages function
+            #pass the new_url to the loop_trough_hotel_pages function
             self.loop_through_hotel_pages(new_url)
         
         
@@ -69,7 +69,7 @@ class Web_scraping:
     '''   
     @author: JohannesKnippel
     
-    loop through the page of al hotels and store the new link of each hotel in variable
+    loop through the page of all hotels and store the new link of each hotel in variable
     then pass it to the function where it loops through each review container
     '''
     def loop_through_hotel_pages(self, loop_url):
@@ -86,7 +86,7 @@ class Web_scraping:
                 
             for link in container.find_all('a', href=True):
                 href = "https://www.tripadvisor.de" + str(link.get('href'))
-                #pass it to the function where single data is scraped
+                #pass it to the function where it loops through all review pages / reviews
                 self.loop_through_review_pages(href)
                 
     
@@ -108,12 +108,40 @@ class Web_scraping:
         obj = json.loads(json_string)
         
         #get title of the hotel
-        self.title = obj["name"]
-        print ("Titel: " + self.title)
+        self.hotelname = obj["name"]
+        print ("Hotelname: " + self.hotelname)
 
         #get overall rating of the hotel
-        self.points = obj["aggregateRating"] ["ratingValue"]
-        print ("Rating: " + self.points)
+        self.overallpoints = obj["aggregateRating"] ["ratingValue"]
+        print ("Overall Rating: " + self.overallpoints)
+        
+        #get price range of hotel
+        self.pricerange = obj["priceRange"]
+        print ("Preis_Level: " + self.pricerange)
+        
+        #get amount of ratings
+        self.rating_amount = obj["aggregateRating"] ["reviewCount"]
+        print ("Rating Amount: " + self.rating_amount)
+        
+        #get address of hotel
+        self.street = obj["address"] ["streetAddress"]
+        print ("Street: " + self.street)
+        
+        #get post code of hotel
+        self.postcode = obj["address"] ["postalCode"]
+        print ("Postcode: " + self.postcode)
+        
+        #get city of hotel
+        self.city = obj["address"] ["addressLocality"]
+        print ("City: " + self.city)
+        
+        #define auto increment ID for each Hote, Review & User
+        self.idHotel = 0
+        self.idReview = 0
+        self.idUser = 0
+        
+         #load all relevant hotel data into database (table: HOTELS)    
+        self.parse_to_tinydb_hotel() 
 
         review_containers = soup.find_all('div', class_= 'review-container')
         reviewsPerPage = len(review_containers)
@@ -199,14 +227,27 @@ class Web_scraping:
         #get rating of the review
         self.points = obj["reviewRating"] ["ratingValue"]
         print ("Rating: " + self.points)
+        
+        #get username of review
+        self.username = soup.find('div', {'class': 'info_text'}).div.text
+        print('Benutzername: ' + self.username)
+        
+        #get number of reviews of user
+        for self.numberOfReviews in soup.findAll('span', {'class': 'badgetext'})[0]:
+            print("Anzahl Reviews: " + self.numberOfReviews.string)
+        
+        #get number of likes of user
+        for self.numberOfLikes in soup.findAll('span', {'class': 'badgetext'})[1]:
+            print("Anzahl Likes: " + self.numberOfLikes.string)
+        
 
         #load all relevant review, User, Picture data into database (table: REVIEWS, USERS, PICTURES)
-        #self.parse_to_tinydb_us_rev_pic()
+        self.parse_to_tinydb_us_rev()
     
 
 
     '''    
-    @author: JohannesKnippel
+    @author: Anja Wolf
     
     TinyDB - Database. Function to handle exit of programm when pressing button on popup.Window
     '''
@@ -216,11 +257,11 @@ class Web_scraping:
 
 
     '''    
-    @author: JohannesKnippel
+    @author: Anja Wolf
     
-    TinyDB - Database. Scraped Data from get_single_data() function will be parsed to a Database saved in .json-Format. These are all the Restaurant related data
+    TinyDB - Database. Scraped Data from get_single_data() function will be parsed to a Database saved in .json-Format. These are all the hotel related data
     '''
-    '''def parse_to_tinydb_rest(self):
+    def parse_to_tinydb_hotel(self):
         cwd = os.getcwd()
         try:
             #create the database or use the existing one
@@ -228,29 +269,28 @@ class Web_scraping:
             #create the tables inside the database
             tableReviews = db.table('REVIEWS')
             tableUsers = db.table('USERS')
-            tablePictures = db.table('PICTURES')
-            tableRestaurants = db.table('RESTAURANTS')
+            tableHotels = db.table('HOTELS')
         
         except:
             print("Error opening file")    
 
 
-        #check if there are already Restaurants in the table, if so, count the Restaurants and set R_ID. check also if the newly set R_ID already exists, if so, count and check again
-        if tableRestaurants.contains((where('R_ID') > 0)):
-            for ids3 in tableRestaurants:
-                self.idRestaurant = self.idRestaurant + 1
-                if tableRestaurants.contains((where('R_ID') == self.idRestaurant)):
+        #check if there are already Hotels in the table, if so, count the Hotels and set R_ID. check also if the newly set R_ID already exists, if so, count and check again
+        if tableHotels.contains((where('R_ID') > 0)):
+            for ids3 in tableHotels:
+                self.idHotel = self.idHotel + 1
+                if tableHotels.contains((where('R_ID') == self.idHotel)):
                     # print ("next")
                     x = 1
                 else:
-                    print ("jetzt wird ein neues Restaurant mit RestaurantID : " + str(self.idRestaurant) + " eingefügt")
+                    print ("jetzt wird ein neues Hotel mit HotelID : " + str(self.idHotel) + " eingefügt")
                     break
         else:
-            self.idRestaurant = 1
+            self.idHotel = 1
 
-        #HANDLE RESTAURANTS
-        #check if there already exists an entry in the Restaurans-table with the same name and the same address (these two attributes don't change/are not variable so there is a more constant way to check for duplicates)
-        if tableRestaurants.contains((where('RESTAURANTNAME') == self.name.string) & (where('PLZ_ORT') == self.locality.string)): 
+        #HANDLE HOTELS
+        #check if there already exists an entry in the Hotels-table with the same name and the same address (these two attributes don't change/are not variable so there is a more constant way to check for duplicates)
+        if tableHotels.contains((where('HOTELNAME') == self.hotelname) & (where('PLZ_ORT') == self.postcode)): 
             #pop up a message box
             msg = "Dieses Restaurant ist bereits in der Datenbank hinterlegt!"
             popup = tk.Tk()
@@ -263,20 +303,18 @@ class Web_scraping:
         # if there is no such entry, parse the data into the corresponding table of the database and define the data to insert into database including an auto increment ID for each Table       
         else:
             #self.popularity2 = unicodedata.normalize('NFD', self.pupularity.text)
-            print("Preis_Level: " + self.price_level)
-            dataRestaurants = {'R_ID':self.idRestaurant, 'RESTAURANTNAME':self.name.string, 'PUNKTESKALA':self.overallPoints.div.span['content'], 'ANZAHL_BEWERTUNGEN':self.rating_amount.string, 'POPULARITAET':self.popularity.text, 'PREIS_LEVEL':self.price_level, 'KUECHE':self.cuisine.text, 'STRASSE':self.address.string, 'PLZ_ORT':self.locality.string, 'TELEFONNUMMER':self.phonenumber.text}
-            tableRestaurants.insert_multiple([dataRestaurants]) 
+            print("Preis_Level: " + self.pricerange)
+            dataHotels = {'R_ID':self.idHotel, 'HOTELNAME':self.hotelname, 'PUNKTESKALA':self.overallpoints, 'PREIS_LEVEL':self.pricerange, 'ANZAHL_BEWERTUNGEN':self.rating_amount, 'STRASSE':self.street, 'PLZ_ORT':self.postcode, 'ORT': self.city}
+            tableHotels.insert_multiple([dataHotels]) 
 
 
-
-    ''' 
     '''
-    @author: JohannesKnippel
+    @author: Anja Wolf
     
     TinyDB - Database. Scraped Data from get_single_review_data() function will be parsed to a Database saved in .json-Format. These are all the Review, Users and Pictures related data
     '''
             
-    ''' def parse_to_tinydb_us_rev_pic(self):
+    def parse_to_tinydb_us_rev(self):
         cwd = os.getcwd()
         try:
             #create the database or use the existing one
@@ -284,8 +322,7 @@ class Web_scraping:
             #create the tables inside the database
             tableReviews = db.table('REVIEWS')
             tableUsers = db.table('USERS')
-            tablePictures = db.table('PICTURES')
-            tableRestaurants = db.table('RESTAURANTS')
+            tableHotels = db.table('HOTELS')
         
         except:
             print("Error opening file") 
@@ -330,7 +367,6 @@ class Web_scraping:
             dataUsers = {'U_ID':self.idUser, 'REV_ID':self.idReview, 'BENUTZERNAME':self.username, 'ANZAHL_REVIEWS':self.numberOfReviews, 'ANZAHL_LIKES':self.numberOfLikes}  
             tableUsers.insert(dataUsers)
 
-
         #HANDLE REVIEWS
         #check if there already exists an entry in the REVIEWSs-table with the same name and the same address (these two attributes don't change/are not variable so there is a more constant way to check for duplicates)
         if tableReviews.contains((where('TITEL') == self.title) & (where('BEWERTUNG') == self.review)): 
@@ -339,91 +375,67 @@ class Web_scraping:
             print(msg)
         #if there is no such entry, parse the data into the corresponding table of the database and define the data to insert into database including an auto increment ID for each Table       
         else:
-            dataReviews = {'R_ID':self.idRestaurant, 'U_ID':self.idUser, 'REV_ID':self.idReview, 'TITEL':self.title, 'BEWERTUNG':self.review, 'RATING':self.points.span.span['alt'].split()[0]}
+            dataReviews = {'R_ID':self.idHotel, 'U_ID':self.idUser, 'REV_ID':self.idReview, 'TITEL':self.title, 'BEWERTUNG':self.review, 'RATING':self.points}
             tableReviews.insert(dataReviews)
 
 
-        #HANDLE PICTURES
-        #check if there already exists an entry in the PICTURES-table with the same name and the same address (these two attributes don't change/are not variable so there is a more constant way to check for duplicates)
-        if tablePictures.contains((where('QUELLE') == self.src)): 
-            #pop up a message box
-            msg = ("Dieses Bild mit dem Link: " + self.src + " wurde bereits in der Datenbank hinterlegt! Es wird weitergesucht...")
-            print(msg)
-        # if there is no such entry, parse the data into the corresponding table of the database and define the data to insert into database including an auto increment ID for each Table       
-        else:  
-            dataPictures = {'REV_ID':self.idReview, 'QUELLE':self.src} 
-            tablePictures.insert(dataPictures)
-'''
-
-
-
     '''
-    @author: Skanny Morandi
+    @author: Anja Wolf
    
-    'opens a GUI that validates a given url-string and starts the scraping on button click
+    opens a GUI that validates a given url-string and starts the scraping on button click
     '''
-    ''' def start_GUI(self):
+    
+    def start_GUI(self):
 
 
         roots = tk.Tk()
         roots.title('Tripadvisor Scraper')
-        instruction = tk.Label(roots, text='Please provide Restaurant-Url\n')
+        instruction = tk.Label(roots, text='Please provide Url\n')
         instruction.grid(row=0, column=0, sticky=tk.E)
 
-        restaurant_label = tk.Label(roots, text='Restaurant-URL ')
-        restaurant_label.grid(row=1, column=0, sticky=tk.W)
-        restaurant_entry = tk.Entry(roots, width=100)
-        restaurant_entry.grid(row=1, column=1, sticky=tk.W)
-        restaurant_name_label = tk.Label(roots, text='Restaurant Name')
-        restaurant_name_label.grid(row=2, column=0, sticky=tk.W)
-        restaurant_city_label = tk.Label(roots, text='City')
-        restaurant_city_label.grid(row=3, column=0, sticky=tk.W)
-        restaurant_rating_label = tk.Label(roots, text='Average Rating')
-        restaurant_rating_label.grid(row=4, column=0, sticky=tk.W)
+        hotel_label = tk.Label(roots, text='URL ')
+        hotel_label.grid(row=1, column=0, sticky=tk.W)
+        hotel_entry = tk.Entry(roots, width=100)
+        hotel_entry.grid(row=1, column=1, sticky=tk.W)
+        hotel_city_label = tk.Label(roots, text='City')
+        hotel_city_label.grid(row=3, column=0, sticky=tk.W)
 
 
-        def preview_restaurant():
-            base_restaurant_url_= "https://www.tripadvisor.de/Restaurant_Review"
-            url_to_check = restaurant_entry.get()
+        def preview_hotel():
+            base_hotel_url_= "https://www.tripadvisor.de/Hotels"
+            url_to_check = hotel_entry.get()
             if  (not validators.url(url_to_check)) or \
-                (base_restaurant_url_ not in url_to_check):
+                (base_hotel_url_ not in url_to_check):
 
-                messagebox.showwarning("Warning", "This seems not to be valid Tripadvisor restaurant URL")
+                messagebox.showwarning("Warning", "This seems not to be valid Tripadvisor URL")
             else:
                 source_code = requests.get(url_to_check)
                 source_code.decoding = ('utf-16BE')
                 plain_text = source_code.text
                 soup = BeautifulSoup(plain_text, "html.parser")
-
-                prev_restuarant_name = soup.find('h1', {'class': 'heading_title'}).string
-
-                prev_restaurant_rating = soup.find('div', {'class': 'rs rating'}).div.span['content']
-
-                prev_restaurant_city = soup.find('span', {'class': 'locality'}).string[:-2]
-
-                prev_restaurant_name_label = tk.Label(roots, text=prev_restuarant_name)
-                prev_restaurant_name_label.grid(row=2, column=1, sticky=tk.W)
+                
+                hotel_city  = soup.find('h1', {'class': 'page_h1_line1'}).string
+                prev_hotel_city = hotel_city.split()[2]
+                
                 prev_restaurant_city_label = tk.Label(roots, text=prev_restaurant_city)
                 prev_restaurant_city_label.grid(row=3, column=1, sticky=tk.W)
-                prev_restaurant_rating_label = tk.Label(roots, text=prev_restaurant_rating)
-                prev_restaurant_rating_label.grid(row=4, column=1, sticky=tk.W)
+    
 
                 roots.pack_slaves()
 
-        preview_button = tk.Button(roots, text='Preview', command=preview_restaurant)
+        preview_button = tk.Button(roots, text='Preview', command=preview_hotel)
         preview_button.grid(columnspan=3, sticky=tk.W)
 
         def go_scrape():
-            self.get_single_data(restaurant_entry.get())
+            self.get_single_data(hotel_entry.get())
 
         scrape_button = tk.Button(roots, text='Start Scraping', command=go_scrape)
 
         scrape_button.grid(columnspan=5, sticky=tk.W)
         roots.mainloop()
-'''
 
 '''
-@author: Skanny Morandi, JohannesKnippel
+@author: Anja Wolf
    
 Main function, will be executed when starting the python-script
 '''  
@@ -433,8 +445,8 @@ if __name__ == "__main__":
     ws = Web_scraping()
     #ws.get_single_data('https://www.tripadvisor.de/Hotels-g187309-oa30-Munich_Upper_Bavaria_Bavaria-Hotels.html')
     #ws.loop_through_review_pages('https://www.tripadvisor.de/Hotel_Review-g187309-d199637-Reviews-Hilton_Munich_Park-Munich_Upper_Bavaria_Bavaria.html')
-    ws.get_single_data('https://www.tripadvisor.de/Hotels-g187309-oa30-Munich_Upper_Bavaria_Bavaria-Hotels.html')
-    #ws.start_GUI()
+    #ws.get_single_data('https://www.tripadvisor.de/Hotels-g187309-oa30-Munich_Upper_Bavaria_Bavaria-Hotels.html')
+    ws.start_GUI()
     #example URL:
     # https://www.tripadvisor.de/Restaurant_Review-g946452-d8757235-Reviews-The_Forge_Tea_Room-Hutton_le_Hole_North_York_Moors_National_Park_North_Yorkshire_.html
     # https://www.tripadvisor.de/Restaurant_Review-g187309-d2656918-Reviews-Savanna-Munich_Upper_Bavaria_Bavaria.html
